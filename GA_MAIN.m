@@ -1,8 +1,5 @@
 
-
-
-
-function generation = GA_MAIN()
+function GA_MAIN()
 clear all;
 close all;
 
@@ -10,14 +7,16 @@ global pop numIndivid boundBox density;
 
 %% INITIALIZE DATA STORAGE
 boundBox = [-30.2,30,17.8]; %XYZ dimensions
-numIndivid = 12;             %number of individuals
+numIndivid = 240;             
+%number of individuals note that 
+%(numIndivid*ratioParetns)%2 needs = 0
 density = .0966435; %lb/in^3
 ratioParents = (1/3);  %percentage of Parents kept
 numKeep = ceil(numIndivid*ratioParents);
-mutationRate = .20;
+mutationRate = .10;
 stopCrit = 1*10^-7;                %stopping criterion (error threshold)
 offsetMultiplier = 1.6;
-uMult = 2;
+displMult = 2;
 
 %% INITIALIZE POPULATION
 pop = cell(numIndivid,1);   % population cell Array
@@ -30,19 +29,20 @@ forces = [0 0 -10];
 pop{1} = generateGraphFromMesh(mesh1,fixed,loaded,forces);
 
 for i = 2:numIndivid
-    pop{i} = randomIndivid(pop{1},offsetMultiplier);
+    pop{i} = randomIndivid(pop{1},0,2);
 end
 
 
 updateTrusses();
-[costs,currMinFit,avgCost] = assignCosts(uMult);
+[costs,currMinFit,avgCost] = assignCosts(displMult);
 [matePairs] = selMatePairs(costs,numKeep);
 mateTrusses(matePairs,numIndivid,ratioParents);
 mutateTrusses(pop,numIndivid,costs,numKeep,mutationRate);
-
-fprintf('INIT POP: random mutations from template\n');
-fprintf('currMinCost: %2.4f, avgCost %2.4f\n',currMinFit,avgCost);
-gaPlot = plotGeneration(costs,numKeep);
+fprintf('POPULATION SIZE: %d\n',numIndivid);
+fprintf('NUMBER OF PARENTS: %d\n',numKeep);
+fprintf('init Min Cost: %2.4f, avgCost %2.4f\n',currMinFit,avgCost);
+numDisplay = 8;
+gaPlot = plotGeneration(costs,numKeep,numDisplay);
 
 
 
@@ -51,28 +51,33 @@ prevMinFit = Inf;
 maxIter = 100;
 minIter = 20;
 currIter = 1;
+minCostVec = [];
+avgCostVec = [];
 while(1)
     %ASSIGN COSTS
     updateTrusses();
-    [costs,currMinFit] = assignCosts(uMult);
-    
+    [costs,currMinFit,avgCost] = assignCosts(displMult);
+    minCostVec = [minCostVec, currMinFit];
+    avgCostVec = [avgCostVec, avgCost];
     %VISUALIZE
         
-    plotGeneration(costs,numKeep);
+    %plotGeneration(costs,numKeep);
     fprintf('GENERATION %d\n',currIter);
     fprintf('   minCost: %2.4f, avgCost %2.5f\n',currMinFit,avgCost);
-    strTitle = ['GENERATION ',num2str(currIter)];
-    uicontrol('Style', 'text',...
-       'String', strTitle,...
-       'Units','normalized',...
-       'Position', [0.9 0.2 0.1 0.1]); 
+    %strTitle = ['GENERATION ',num2str(currIter)];
+    %uicontrol('Style', 'text',...
+    %   'String', strTitle,...
+    %   'Units','normalized',...
+    %   'Position', [0.9 0.2 0.1 0.1]); 
 
     %CHECK STOPPING CRITERIA (CONVERGENCE)
     currError = prevMinFit-currMinFit;
     if(currError < stopCrit && currIter>minIter)
+        plotGeneration(costs,numKeep,numDisplay);
         fprintf('stop crit met\n');
         break
     elseif(currIter>maxIter)
+        plotGeneration(costs,numKeep,numDisplay);
         fprintf('maxIter met\n');
         break
     end
@@ -90,7 +95,21 @@ while(1)
     currIter = currIter + 1;
     
 end
-generation = pop;
+genVec = 1:currIter;
+figure(3);
+plot(genVec,minCostVec,'Marker','.');
+title('MINIMUM COST AT EACH GENERATION');
+xlabel('generation');
+ylabel('minimum cost');
+figure(4);
+plot(genVec, avgCostVec,'Marker','o','Color','r');
+title('AVERAGE COST AT EACH GENERATION');
+xlabel('generation');
+ylabel('average cost');
+
+
+%generation = pop;
+
 
 fprintf('exited optimization loop');
 

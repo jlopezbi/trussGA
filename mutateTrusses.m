@@ -36,7 +36,7 @@ for i = 1:numMutations
         pop{idxTruss}.mutatedVerts = cat(2,pop{idxTruss}.mutatedVerts,idxVert);
     else
         %fprintf('       new mutatedVerts added idxVert:,%d\n',idxVert);
-        pop{idxTruss}.mutatedVerts = [idxVert];
+        pop{idxTruss}.mutatedVerts = idxVert;
     end
     
     pop{idxTruss}.Coord(:,idxVert) = randomVert(pop{idxTruss}.Coord(:,idxVert));
@@ -45,12 +45,32 @@ for i = 1:numMutations
 end
 
     function newVert = randomVert(initVert)
-        offsets = offset*randn(3,1);
+        mean = 0;
+        sD = 1;
+        offsets = random('Normal',mean,sD,3,1);
         newVert = offsets+initVert;
+        
+        %Constrain X to boundBoxX [-30.2,0]
         if(newVert(1)<boundBox(1))
             newVert(1) = boundBox(1);
-        elseif newVert(1)
+        elseif newVert(1)>0
+            newVert(1) = 0;
         end
+        
+        %Constrain Y to boundBoxY [0,30]
+        if(newVert(2)>boundBox(2))
+            newVert(2) = boundBox(2);
+        elseif newVert(2)<0
+            newVert(2) = 0;
+        end
+        
+        %Constrain Z to boundBoxZ [0,17.8]
+        if(newVert(3)>boundBox(3))
+            newVert(3) = boundBox(3);
+        elseif newVert(3)<0
+            newVert(3) = 0;
+        end
+        
         %disp(newVert);
         
     end

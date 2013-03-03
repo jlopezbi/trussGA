@@ -1,4 +1,4 @@
-function [individual] = randomIndivid(templateTruss,offsetMultiplier)
+function [individual] = randomIndivid(templateTruss,mean,sD)
 %[individual] = randomIndivid(templateTruss)
 %create a random individual from a template individual by replacing mutable
 %verts with random verts
@@ -15,14 +15,9 @@ zDim = boundBox(3);
 
 for i = 1:numVerts
     if(~any(i==noChangeVerts))
-        offset = randn(3,1)*offsetMultiplier;
+        offset = random('Normal',mean,sD,3,1);
         %disp(offset);
         individual.Coord(:,i) = individual.Coord(:,i)+offset;
-        
-%         individual.Coord(1,i) = randn(1)*xDim; %X VALUE
-%         individual.Coord(2,i) = rand(1)*yDim; %Y VALUE
-%         individual.Coord(2,i) = rand(1)*zDim; %Z VALUE
-        
     end
 end
 
